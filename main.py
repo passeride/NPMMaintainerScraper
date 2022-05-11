@@ -14,8 +14,6 @@ import whois
 pp = pprint.PrettyPrinter(indent=4)
 npm_info_api_url = "https://api.npms.io/v2/package/"
 
-start_point = "create-react-app"
-
 
 class EnhancedJSONEncoder(json.JSONEncoder):
 
@@ -46,7 +44,9 @@ dependency_graph: Dict[str, Package] = {}
 
 email_domain: Dict[str, EmailDomain] = {}
 
-queued_packages: List[str] = []
+queued_packages: List[str] = ["create-react-app"]
+
+invliad_emails: List[str] = []
 
 
 def get_info(package_name: str):
@@ -54,6 +54,7 @@ def get_info(package_name: str):
     global dependency_graph
     global email_domain
     global queued_packages
+    global invliad_emails
 
     if (package_name in dependency_graph):
         package = dependency_graph[package_name]
@@ -75,20 +76,20 @@ def get_info(package_name: str):
         for maintainer in data['collected']['metadata']['maintainers']:
             if "email" in maintainer:
                 maintainers.append(maintainer['email'])
-    except KeyError:
-        pass
+    except KeyError as e:
+        print(e)
 
     try:
         for dep in data['collected']['metadata']['devDependencies']:
             dependencies.append(dep)
-    except KeyError:
-        pass
+    except KeyError as e:
+        print(e)
 
     try:
         for dep in data['collected']['metadata']['dependencies']:
             dependencies.append(dep)
-    except KeyError:
-        pass
+    except KeyError as e:
+        print(e)
 
     package = Package(package_name, True, "", maintainers, dependencies)
     dependency_graph[package_name] = package
@@ -100,10 +101,11 @@ def get_info(package_name: str):
                 isValid = whois.whois(domain).registrar != None
                 email_domain[domain] = EmailDomain(domain, isValid)
                 if not isValid:
-                    print("FOUND INVALID DOMAIN %s on email %s",
+                    print("FOUND INVALID DOMAIN %s on email %s" %
                           (domain, main))
+                    invliad_emails.append(main)
         except Exception as e:
-            pass
+            print(e)
 
     for dep in package.dependencies:
         if dep not in queued_packages:
@@ -113,11 +115,10 @@ def get_info(package_name: str):
           (len(dependency_graph), len(queued_packages), package_name))
     write_depgraph()
 
-    get_info(queued_packages.pop(0))
-
 
 def write_depgraph():
     global dependency_graph
+    global invliad_emails
     # Serializing json
     json_object = json.dumps(dependency_graph,
                              indent=4,
@@ -126,5 +127,11 @@ def write_depgraph():
     with open("npm_registry.json", "w") as outfile:
         outfile.write(json_object)
 
+    json_object = json.dumps(invliad_emails, indent=4, cls=EnhancedJSONEncoder)
+    # Writing to sample.json
+    with open("invalid_emails.json", "w") as outfile:
+        outfile.write(json_object)
 
-get_info(start_point)
+
+while len(queued_packages) > 0:
+    get_info(queued_packages.pop(0))

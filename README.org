@@ -1,0 +1,13 @@
+#+TITLE: README
+#+AUTHOR: [[mailto:post@passeride.com][Lukas H L]]
+#+DATE:  <2022-05-11 on.><2022-05-11 on.>
+
+* README NPM maintainer scraper
+
+This is inspired by this post on reddit
+[[https://www.reddit.com/r/programming/comments/umnppb/lrvick_bought_the_expired_domain_name_for_the/][@lrvick bought the expired domain name for the &#x27;foreach&#x27; NPM packag...]]
+
+So it will go over npm folllowing dependencies and looking at the mail of the maintainers, and doing a whois lookup to find potentially orphaned packages
+
+* Results
+Did not find anything interesting, but fun project :) 
